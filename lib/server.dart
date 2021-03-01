@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:convert/convert.dart';
-import './bigint_ex.dart';
+import './srpint.dart';
 import './types.dart';
 import './params.dart';
 
@@ -9,28 +9,35 @@ Ephemeral generateEphemeral(String verifier) {
   final g = Params.g;
   final k = Params.k;
 
-  final v = BigInt.parse(verifier, radix: 16);
+  final v = SrpInt.parse(verifier, radix: 16);
 
   final random = Random.secure();
-  final randomHex = hex.encode(List<int>.generate(Params.hashOutputBytes, (i) => random.nextInt(256)));
+  final randomHex = hex.encode(
+      List<int>.generate(Params.hashOutputBytes, (i) => random.nextInt(256)));
 
-  final b = BigInt.parse(randomHex, radix: 16);
+  final b = SrpInt.parse(randomHex, radix: 16);
   final B = (k * v + g.modPow(b, N)) % N;
 
   return Ephemeral(secret: randomHex, public: B.toHex());
 }
 
-Session deriveSession(String serverSecretEphemeral, String clientPublicEphemeral, String salt, String username, String verifier, String clientSessionProof) {
+Session deriveSession(
+    String serverSecretEphemeral,
+    String clientPublicEphemeral,
+    String salt,
+    String username,
+    String verifier,
+    String clientSessionProof) {
   final N = Params.N;
   final g = Params.g;
   final k = Params.k;
   final H = Params.H;
 
-  final b = BigInt.parse(serverSecretEphemeral, radix: 16);
-  final A = BigInt.parse(clientPublicEphemeral, radix: 16);
-  final s = BigInt.parse(salt, radix: 16);
+  final b = SrpInt.parse(serverSecretEphemeral, radix: 16);
+  final A = SrpInt.parse(clientPublicEphemeral, radix: 16);
+  final s = SrpInt.parse(salt, radix: 16);
   final I = username;
-  final v = BigInt.parse(verifier, radix: 16);
+  final v = SrpInt.parse(verifier, radix: 16);
 
   final B = (k * v + g.modPow(b, N)) % N;
 
@@ -54,7 +61,7 @@ Session deriveSession(String serverSecretEphemeral, String clientPublicEphemeral
   ]);
 
   final expected = M;
-  final actual = BigInt.parse(clientSessionProof, radix: 16);
+  final actual = SrpInt.parse(clientSessionProof, radix: 16);
 
   if (actual != expected) {
     throw Exception('Client provided session proof is invalid');
